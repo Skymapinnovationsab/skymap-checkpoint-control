@@ -21,13 +21,13 @@ function initializeApp() {
 
 function setupEventListeners() {
     // Run analysis button
-    const runButton = document.getElementById('runAnalysis');
+    const runButton = document.getElementById('submitBtn');
     if (runButton) {
         runButton.addEventListener('click', handleRunAnalysis);
     }
     
     // File input change events
-    const pointCloudInput = document.getElementById('point_cloud');
+    const pointCloudInput = document.getElementById('pointCloud');
     const checkpointsInput = document.getElementById('checkpoints');
     
     if (pointCloudInput) {
@@ -116,7 +116,7 @@ function handleFileSelection(event) {
 
 function validateFileType(file, inputElement) {
     const allowedExtensions = {
-        'point_cloud': ['.las', '.laz', '.csv', '.tsv', '.txt'],
+        'pointCloud': ['.las', '.laz', '.csv', '.tsv', '.txt'],
         'checkpoints': ['.csv', '.tsv', '.txt']
     };
     
@@ -192,18 +192,18 @@ function clearInputError(input) {
 }
 
 function validateForm() {
-    const runButton = document.getElementById('runAnalysis');
-    const pointCloudInput = document.getElementById('point_cloud');
+    const runButton = document.getElementById('submitBtn');
+    const pointCloudInput = document.getElementById('pointCloud');
     const checkpointsInput = document.getElementById('checkpoints');
     
     let isValid = true;
     
     // Check if files are selected
-    if (!pointCloudInput.files[0]) {
+    if (!pointCloudInput || !pointCloudInput.files[0]) {
         isValid = false;
     }
     
-    if (!checkpointsInput.files[0]) {
+    if (!checkpointsInput || !checkpointsInput.files[0]) {
         isValid = false;
     }
     
@@ -238,14 +238,14 @@ function handleRunAnalysis() {
     const formData = new FormData();
     
     // Add files
-    const pointCloudFile = document.getElementById('point_cloud').files[0];
+    const pointCloudFile = document.getElementById('pointCloud').files[0];
     const checkpointsFile = document.getElementById('checkpoints').files[0];
     
     formData.append('point_cloud', pointCloudFile);
     formData.append('checkpoints', checkpointsFile);
     
     // Add all form parameters
-    const paramsForm = document.getElementById('paramsForm');
+    const paramsForm = document.getElementById('uploadForm');
     const formInputs = paramsForm.querySelectorAll('input, select');
     
     formInputs.forEach(input => {

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyMap Checkpoint Control - Quality Assessment Tool</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- Header with SkyMap Logo -->
+    <header class="bg-primary text-white py-3">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <img src="{{ url_for('static', filename='images/skymap_logo.bmp') }}" alt="SkyMap Logo" class="me-3" style="height: 60px;">
+                        <div>
+                            <h1 class="h3 mb-0">Checkpoint Control</h1>
+                            <p class="mb-0 text-light">Quality Assessment Tool</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="d-flex align-items-center justify-content-end">
+                        <div class="me-3">
+                            <i class="fas fa-user me-2"></i>
+                            <span>Welcome, {{ session.username }}</span>
+                        </div>
+                        <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-sign-out-alt me-1"></i>Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container my-5">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Welcome Section -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <h2 class="card-title text-primary mb-3">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Point Cloud Quality Assessment
+                        </h2>
+                        <p class="card-text text-muted fs-5">
+                            Upload your point cloud and checkpoint files to perform comprehensive quality analysis
+                        </p>
+                        <div class="row mt-4">
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center justify-content-center mb-3">
+                                    <i class="fas fa-cloud-upload-alt text-primary fs-1 me-3"></i>
+                                    <div class="text-start">
+                                        <h5 class="mb-1">Upload Files</h5>
+                                        <small class="text-muted">LAS/LAZ point clouds & CSV checkpoints</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center justify-content-center mb-3">
+                                    <i class="fas fa-cogs text-primary fs-1 me-3"></i>
+                                    <div class="text-start">
+                                        <h5 class="mb-1">Configure Analysis</h5>
+                                        <small class="text-muted">Adjust parameters for optimal results</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center justify-content-center mb-3">
+                                    <i class="fas fa-chart-bar text-primary fs-1 me-3"></i>
+                                    <div class="text-start">
+                                        <h5 class="mb-1">View Results</h5>
+                                        <small class="text-muted">Detailed quality metrics & reports</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h4 class="card-title mb-0">
+                            <i class="fas fa-upload me-2"></i>
+                            File Upload & Analysis Configuration
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <form id="uploadForm" enctype="multipart/form-data">
+                            <!-- File Upload Section -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label for="pointCloud" class="form-label">
+                                        <i class="fas fa-cloud me-2"></i>Point Cloud File
+                                    </label>
+                                    <input type="file" class="form-control" id="pointCloud" name="point_cloud" 
+                                           accept=".las,.laz" required>
+                                    <div class="form-text">Supported formats: LAS, LAZ (max 2GB)</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="checkpoints" class="form-label">
+                                        <i class="fas fa-map-pin me-2"></i>Checkpoints File
+                                    </label>
+                                    <input type="file" class="form-control" id="checkpoints" name="checkpoints" 
+                                           accept=".csv,.tsv,.txt" required>
+                                    <div class="form-text">Supported formats: CSV, TSV, TXT (max 100MB)</div>
+                                </div>
+                            </div>
+
+                            <!-- Analysis Parameters -->
+                            <div class="accordion" id="parametersAccordion">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" 
+                                                data-bs-toggle="collapse" data-bs-target="#basicParams">
+                                            <i class="fas fa-sliders-h me-2"></i>
+                                            Basic Parameters
+                                        </button>
+                                    </h2>
+                                    <div id="basicParams" class="accordion-collapse collapse" 
+                                         data-bs-parent="#parametersAccordion">
+                                        <div class="accordion-body">
+                                            <div class="row">
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="radius" class="form-label">Search Radius</label>
+                                                    <input type="number" class="form-control" id="radius" name="radius" 
+                                                           step="0.01" min="0.01" max="10.0" value="0.2">
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="knn" class="form-label">K-Nearest Neighbors</label>
+                                                    <input type="number" class="form-control" id="knn" name="knn" 
+                                                           min="1" max="1000" value="200">
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="mad_alpha" class="form-label">MAD Alpha</label>
+                                                    <input type="number" class="form-control" id="mad_alpha" name="mad_alpha" 
+                                                           step="0.1" min="1.0" max="20.0" value="6.0">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" 
+                                                data-bs-toggle="collapse" data-bs-target="#advancedParams">
+                                            <i class="fas fa-cogs me-2"></i>
+                                            Advanced Parameters
+                                        </button>
+                                    </h2>
+                                    <div id="advancedParams" class="accordion-collapse collapse" 
+                                         data-bs-parent="#parametersAccordion">
+                                        <div class="accordion-body">
+                                            <div class="row">
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="ransac_thresh" class="form-label">RANSAC Threshold</label>
+                                                    <input type="number" class="form-control" id="ransac_thresh" name="ransac_thresh" 
+                                                           step="0.001" min="0.001" max="1.0" value="0.08">
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="ransac_iters" class="form-label">RANSAC Iterations</label>
+                                                    <input type="number" class="form-control" id="ransac_iters" name="ransac_iters" 
+                                                           min="10" max="10000" value="400">
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="min_inliers" class="form-label">Min Inliers</label>
+                                                    <input type="number" class="form-control" id="min_inliers" name="min_inliers" 
+                                                           min="1" max="100" value="5">
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="min_neighbors" class="form-label">Min Neighbors</label>
+                                                    <input type="number" class="form-control" id="min_neighbors" name="min_neighbors" 
+                                                           min="1" max="100" value="5">
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="tolerance" class="form-label">Tolerance</label>
+                                                    <input type="number" class="form-control" id="tolerance" name="tolerance" 
+                                                           step="0.001" min="0.001" max="1.0" value="0.025">
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="centroid_max_offset" class="form-label">Centroid Max Offset</label>
+                                                    <input type="number" class="form-control" id="centroid_max_offset" name="centroid_max_offset" 
+                                                           step="0.001" min="0.001" max="10.0" value="0.15">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" 
+                                                data-bs-toggle="collapse" data-bs-target="#adaptiveParams">
+                                            <i class="fas fa-adjust me-2"></i>
+                                            Adaptive Parameters
+                                        </button>
+                                    </h2>
+                                    <div id="adaptiveParams" class="accordion-collapse collapse" 
+                                         data-bs-parent="#parametersAccordion">
+                                        <div class="accordion-body">
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="adaptive_radius" name="adaptive_radius">
+                                                        <label class="form-check-label" for="adaptive_radius">
+                                                            Enable Adaptive Radius
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="export_points" name="export_points">
+                                                        <label class="form-check-label" for="export_points">
+                                                            Export Point Data
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="adaptive_radius_start" class="form-label">Adaptive Radius Start</label>
+                                                    <input type="number" class="form-control" id="adaptive_radius_start" name="adaptive_radius_start" 
+                                                           step="0.01" min="0.01" max="10.0" value="0.1">
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="adaptive_radius_step" class="form-label">Adaptive Radius Step</label>
+                                                    <input type="number" class="form-control" id="adaptive_radius_step" name="adaptive_radius_step" 
+                                                           step="0.001" min="0.001" max="1.0" value="0.05">
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="adaptive_radius_max" class="form-label">Adaptive Radius Max</label>
+                                                    <input type="number" class="form-control" id="adaptive_radius_max" name="adaptive_radius_max" 
+                                                           step="0.01" min="0.01" max="10.0" value="0.4">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" 
+                                                data-bs-toggle="collapse" data-bs-target="#exportParams">
+                                            <i class="fas fa-download me-2"></i>
+                                            Export Options
+                                        </button>
+                                    </h2>
+                                    <div id="exportParams" class="accordion-collapse collapse" 
+                                         data-bs-parent="#parametersAccordion">
+                                        <div class="accordion-body">
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="export_stage" class="form-label">Export Stage</label>
+                                                    <select class="form-select" id="export_stage" name="export_stage">
+                                                        <option value="all">All Stages</option>
+                                                        <option value="filtered">Filtered Only</option>
+                                                        <option value="final">Final Only</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="cps_sep" class="form-label">CSV Separator</label>
+                                                    <select class="form-select" id="cps_sep" name="cps_sep">
+                                                        <option value=",">Comma (,)</option>
+                                                        <option value=";">Semicolon (;)</option>
+                                                        <option value="\t">Tab</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="text-center mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg px-5" id="submitBtn">
+                                    <i class="fas fa-play me-2"></i>
+                                    Start Analysis
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Section (Hidden by default) -->
+        <div class="row mt-4" id="progressSection" style="display: none;">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-spinner fa-spin me-2"></i>
+                            Processing Analysis...
+                        </h5>
+                        <div class="progress mb-3">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <p class="text-muted mb-0">Please wait while we process your files. This may take several minutes.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section (Hidden by default) -->
+        <div class="row mt-4" id="resultsSection" style="display: none;">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="card-title mb-0">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Analysis Complete
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="resultsContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        Secure & Professional Surveying Solutions
+                    </p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p class="mb-0 text-muted">
+                        © 2025 SkyMap Innovations AB
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

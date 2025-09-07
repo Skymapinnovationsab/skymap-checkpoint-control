@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Results - SkyMap Checkpoint Control</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- Header with SkyMap Logo -->
+    <header class="bg-primary text-white py-3">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <img src="{{ url_for('static', filename='images/skymap_logo.bmp') }}" alt="SkyMap Logo" class="me-3" style="height: 60px;">
+                        <div>
+                            <h1 class="h3 mb-0">Checkpoint Control</h1>
+                            <p class="mb-0 text-light">Analysis Results</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Analysis
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container my-4">
+        <!-- Session Info -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h2 class="h5 mb-0"><i class="fas fa-info-circle me-2"></i>Analysis Session</h2>
+            </div>
+            <div class="card-body">
+                <p class="mb-2"><strong>Session ID:</strong> {{ session_id }}</p>
+                <p class="mb-0"><strong>Analysis Date:</strong> {{ session_id[:8] }} at {{ session_id[9:11] }}:{{ session_id[11:13] }}:{{ session_id[13:15] }}</p>
+            </div>
+        </div>
+
+        <!-- Summary Results -->
+        {% if summary %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">
+                <h2 class="h5 mb-0"><i class="fas fa-chart-line me-2"></i>Analysis Summary</h2>
+            </div>
+            <div class="card-body">
+                <pre class="bg-light p-3 rounded" style="white-space: pre-wrap; font-family: monospace;">{{ summary }}</pre>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Detailed Results Table -->
+        {% if results_data is not none %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h2 class="h5 mb-0"><i class="fas fa-table me-2"></i>Detailed Results</h2>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                {% for col in results_data.columns %}
+                                <th>{{ col }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for _, row in results_data.iterrows() %}
+                            <tr class="{% if row['id'] == 'TOTAL' %}table-info fw-bold{% elif row.get('within_tol') == False %}table-warning{% endif %}">
+                                {% for col in results_data.columns %}
+                                <td>
+                                    {% if col in ['dZ', 'd_perp', 'centroid_dx', 'centroid_dy', 'centroid_dxy', 'used_radius'] %}
+                                        {% if row[col] is not none and not pd.isna(row[col]) %}
+                                            {{ "%.3f"|format(row[col]) }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    {% elif col == 'within_tol' %}
+                                        {% if row[col] == True %}
+                                            <span class="badge bg-success">✓</span>
+                                        {% elif row[col] == False %}
+                                            <span class="badge bg-danger">✗</span>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    {% elif col == 'status' %}
+                                        {% if 'ok' in row[col] %}
+                                            <span class="badge bg-success">{{ row[col] }}</span>
+                                        {% elif 'out_of_tol' in row[col] %}
+                                            <span class="badge bg-warning text-dark">{{ row[col] }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ row[col] }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        {{ row[col] if row[col] is not none else '-' }}
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Download Section -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h2 class="h5 mb-0"><i class="fas fa-download me-2"></i>Download Results</h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h6>Main Results</h6>
+                        <a href="{{ url_for('download_file', session_id=session_id, filename='cp_check_results.csv') }}" 
+                           class="btn btn-outline-primary">
+                            <i class="fas fa-file-csv me-2"></i>Download CSV Results
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6>Summary Report</h6>
+                        <a href="{{ url_for('download_file', session_id=session_id, filename='cp_check_results_summary.txt') }}" 
+                           class="btn btn-outline-secondary">
+                            <i class="fas fa-file-text me-2"></i>Download Summary
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Check for additional export files -->
+                {% set export_files = [] %}
+                {% for filename in ['cp_check_points.csv'] %}
+                    {% if filename in session_files %}
+                        {% set _ = export_files.append(filename) %}
+                    {% endif %}
+                {% endfor %}
+                
+                {% if export_files %}
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Exported Point Data</h6>
+                        {% for filename in export_files %}
+                        <a href="{{ url_for('download_file', session_id=session_id, filename=filename) }}" 
+                           class="btn btn-outline-success me-2">
+                            <i class="fas fa-download me-2"></i>{{ filename }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        {% if results_data is not none %}
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <div class="card text-center bg-primary text-white">
+                    <div class="card-body">
+                        <h3 class="card-title">{{ results_data[results_data['id'] != 'TOTAL'].shape[0] }}</h3>
+                        <p class="card-text">Total Checkpoints</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center bg-success text-white">
+                    <div class="card-body">
+                        <h3 class="card-title">
+                            {{ results_data[(results_data['id'] != 'TOTAL') and (results_data['within_tol'] == True)].shape[0] if 'within_tol' in results_data.columns else 'N/A' }}
+                        </h3>
+                        <p class="card-text">Within Tolerance</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center bg-warning text-dark">
+                    <div class="card-body">
+                        <h3 class="card-title">
+                            {{ results_data[(results_data['id'] != 'TOTAL') and (results_data['within_tol'] == False)].shape[0] if 'within_tol' in results_data.columns else 'N/A' }}
+                        </h3>
+                        <p class="card-text">Out of Tolerance</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center bg-info text-white">
+                    <div class="card-body">
+                        <h3 class="card-title">
+                            {{ "%.3f"|format(results_data[results_data['id'] == 'TOTAL']['dZ'].iloc[0]) if results_data[results_data['id'] == 'TOTAL'].shape[0] > 0 and 'dZ' in results_data.columns else 'N/A' }}
+                        </h3>
+                        <p class="card-text">Bias (m)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="text-center mt-4">
+            <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg me-3">
+                <i class="fas fa-plus me-2"></i>New Analysis
+            </a>
+            <button onclick="window.print()" class="btn btn-secondary btn-lg">
+                <i class="fas fa-print me-2"></i>Print Results
+            </button>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-3 mt-5">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2025 SkyMap Innovations. Professional surveying solutions.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

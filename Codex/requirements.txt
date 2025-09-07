@@ -1,0 +1,8 @@
+numpy
+rasterio
+shapely
+fiona
+pyproj
+matplotlib
+scikit-image
+scikit-learn

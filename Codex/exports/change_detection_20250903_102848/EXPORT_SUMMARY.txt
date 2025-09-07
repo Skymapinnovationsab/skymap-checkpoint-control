@@ -1,0 +1,55 @@
+🏗️ VAXJO SIMHALL CHANGE DETECTION EXPORT PACKAGE
+==================================================
+
+📅 Generated: September 3, 2025, 10:28:48 UTC
+🔍 Analysis ID: 5567c7c4-8f18-4888-a80c-d8e791bbb9e0
+📍 Location: Vaxjo Nya Simhall Construction Site
+
+🚨 CRITICAL FINDINGS:
+- Risk Level: HIGH ⚠️
+- Maximum Change: 16.74 meters
+- Changed Area: 69,525 m²
+- Immediate Action Required: Site inspection within 24 hours
+
+📁 PACKAGE CONTENTS:
+
+📋 Documentation:
+- EXECUTIVE_SUMMARY.md - Critical findings and recommendations
+- TECHNICAL_DETAILS.md - Technical specifications and processing details
+- README.md - Package overview and usage instructions
+- EXPORT_SUMMARY.txt - This summary file
+
+🗺️ Geospatial Data (results/):
+- DSM_A.tif (11MB) - Before elevation model
+- DSM_B.tif (13MB) - After elevation model  
+- DSM_diff.tif (8.5MB) - Change magnitude raster
+- diff_mask.tif (8.5MB) - Change detection mask
+- changed_areas.geojson (2.8MB) - Change area polygons
+
+☁️ Point Cloud Data (results/):
+- A_3009.laz (246MB) - Filtered before point cloud
+- B_3009.laz (229MB) - Filtered after point cloud
+
+📊 Analysis Results (results/):
+- ai_analysis_report.json (1.4KB) - AI reasoning and risk assessment
+- DSM_diff.tif.aux.xml (391B) - Raster metadata
+
+📊 STATISTICS:
+- Total Files: 12
+- Total Size: ~500MB
+- File Types: 4 (MD, TIF, LAZ, GEOJSON, JSON, XML)
+- Coordinate System: EPSG:3009 (Swedish National Grid)
+
+🎯 IMMEDIATE ACTIONS:
+1. Review EXECUTIVE_SUMMARY.md for critical findings
+2. Open changed_areas.geojson in GIS software
+3. Plan site inspection based on change locations
+4. Contact structural engineer for assessment
+
+⚠️ IMPORTANT:
+- All data aligned to Swedish National Grid
+- 0.25m cell size for high-resolution analysis
+- AI analysis provides guidance, verify with professionals
+- Use responsibly and follow safety protocols
+
+✅ EXPORT STATUS: COMPLETE AND READY FOR USE
